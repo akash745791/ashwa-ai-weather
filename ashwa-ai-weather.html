@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ASHWA AI // WEATHER INTELLIGENCE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;600;700;800&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#040810;--panel:rgba(10,22,38,.55);--line:rgba(0,229,255,.25);--cyan:#00e5ff;--cyan-dim:#0891a8;--blue:#3d7dff;--ink:#dff3ff;--ink-dim:#7f9bb3;--warn:#ff5c4d;--amber:#ffb03b;--r:14px;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{background:var(--bg);color:var(--ink);font-family:'Rajdhani',sans-serif;min-height:100vh;overflow-x:hidden;}
+h1,h2,.disp{font-family:'Orbitron',sans-serif;}
+#bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;background-image:linear-gradient(rgba(0,229,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,255,.06) 1px,transparent 1px);background-size:44px 44px;mask-image:radial-gradient(ellipse 90% 70% at 50% 10%,#000 40%,transparent 90%);animation:gridshift 40s linear infinite;}
+@keyframes gridshift{to{background-position:400px 0,0 400px;}}
+#bg-glow{position:fixed;inset:0;z-index:0;pointer-events:none;background:radial-gradient(600px 400px at 15% 5%,rgba(61,125,255,.16),transparent 60%),radial-gradient(700px 500px at 90% 30%,rgba(0,229,255,.12),transparent 60%);animation:glowpulse 8s ease-in-out infinite;}
+@keyframes glowpulse{0%,100%{opacity:.7}50%{opacity:1}}
+.wrap{max-width:1180px;margin:0 auto;padding:26px 20px 60px;position:relative;z-index:2;}
+.glass{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);backdrop-filter:blur(10px);position:relative;}
+.corner{position:absolute;width:14px;height:14px;pointer-events:none;}
+.corner.tl{top:-1px;left:-1px;border-top:2px solid var(--cyan);border-left:2px solid var(--cyan);}
+.corner.br{bottom:-1px;right:-1px;border-bottom:2px solid var(--cyan);border-right:2px solid var(--cyan);}
+header{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;margin-bottom:22px;}
+.brand{display:flex;gap:12px;align-items:center;}
+.brand svg{width:44px;height:44px;filter:drop-shadow(0 0 6px rgba(0,229,255,.6));}
+.brand h1{font-size:22px;letter-spacing:.06em;color:var(--ink);}
+.brand span{display:block;font-size:11px;letter-spacing:.28em;color:var(--cyan-dim);margin-top:2px;}
+.live{display:flex;align-items:center;gap:7px;font-size:11.5px;letter-spacing:.15em;color:var(--cyan);}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--cyan);box-shadow:0 0 8px var(--cyan);animation:pulse 1.6s ease-in-out infinite;}
+@keyframes pulse{0%,100%{opacity:.5;transform:scale(.85)}50%{opacity:1;transform:scale(1.1)}}
+.searchbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:22px;}
+.searchbar input{flex:1;min-width:180px;background:rgba(0,229,255,.05);border:1px solid var(--line);border-radius:8px;padding:12px 14px;color:var(--ink);font-size:15px;outline:none;}
+.searchbar input:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,229,255,.1);}
+.btn{padding:12px 18px;border-radius:8px;border:none;font-weight:700;letter-spacing:.06em;font-size:13.5px;cursor:pointer;transition:transform .2s,box-shadow .2s;}
+.btn-primary{background:linear-gradient(90deg,var(--cyan),var(--blue));color:#02121a;}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,229,255,.25);}
+.btn-ghost{background:rgba(0,229,255,.08);color:var(--ink);border:1px solid var(--line);}
+.btn-ghost:hover{border-color:var(--cyan);}
+#suggestBox{position:absolute;top:calc(100% + 6px);left:0;right:0;z-index:20;display:none;background:#0a1524;border:1px solid var(--line);border-radius:10px;overflow:hidden;max-height:260px;overflow-y:auto;}
+#suggestBox.show{display:block;}
+#suggestBox div{padding:11px 14px;font-size:14px;color:var(--ink);cursor:pointer;border-bottom:1px solid rgba(0,229,255,.08);}
+#suggestBox div:last-child{border-bottom:none;}
+#suggestBox div:hover,#suggestBox div.active{background:rgba(0,229,255,.12);color:var(--cyan);}
+#suggestBox div small{display:block;color:var(--ink-dim);font-size:11.5px;}
+.locrow{font-size:13px;color:var(--ink-dim);margin-bottom:18px;letter-spacing:.04em;}
+.locrow b{color:var(--ink);}
+.hero{display:grid;grid-template-columns:1.1fr 1fr;gap:18px;margin-bottom:18px;}
+@media(max-width:760px){.hero{grid-template-columns:1fr;}}
+.hero-card{padding:26px;}
+.temp-row{display:flex;align-items:center;gap:18px;}
+.temp-row svg{width:80px;height:80px;filter:drop-shadow(0 0 10px rgba(0,229,255,.5));}
+.tval{font-family:'Orbitron';font-size:52px;color:var(--ink);}
+.cond{font-size:16px;color:var(--cyan);letter-spacing:.04em;margin-top:2px;}
+.feels{font-size:13px;color:var(--ink-dim);margin-top:4px;}
+.ai-box{padding:20px 22px;}
+.ai-tag{font-size:11px;letter-spacing:.22em;color:var(--cyan);margin-bottom:8px;}
+.ai-text{font-size:14.5px;line-height:1.6;color:var(--ink);}
+.grid-stats{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:12px;margin-bottom:18px;}
+.stat{padding:14px;text-align:center;}
+.stat .l{font-size:10.5px;letter-spacing:.14em;color:var(--ink-dim);}
+.stat .v{font-family:'Orbitron';font-size:17px;color:var(--ink);margin-top:6px;}
+.sec-title{font-size:13px;letter-spacing:.2em;color:var(--cyan-dim);margin:26px 0 12px;display:flex;align-items:center;gap:10px;}
+.sec-title::before{content:'';width:20px;height:1px;background:var(--cyan-dim);}
+.hscroll{display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;}
+.hour{min-width:88px;padding:14px 10px;text-align:center;flex-shrink:0;}
+.hour svg{width:34px;height:34px;margin:6px 0;}
+.hour .t{font-size:12px;color:var(--ink-dim);}
+.hour .v{font-family:'Orbitron';font-size:15px;}
+.hour .p{font-size:11px;color:var(--cyan-dim);margin-top:3px;}
+.days{display:flex;flex-direction:column;gap:8px;}
+.day{display:grid;grid-template-columns:90px 40px 1fr auto;align-items:center;gap:14px;padding:12px 16px;}
+.day svg{width:28px;height:28px;}
+.day .dn{font-size:14px;}
+.day .dn small{display:block;color:var(--ink-dim);font-size:11px;}
+.day .cond2{font-size:12.5px;color:var(--ink-dim);}
+.day .rng{font-family:'Orbitron';font-size:14px;white-space:nowrap;}
+.day .rng .lo{color:var(--ink-dim);}
+.alert-card{padding:18px 20px;display:flex;align-items:center;gap:14px;margin-top:22px;}
+.alert-card.ok{border-color:rgba(0,229,255,.2);}
+.alert-card.warn{border-color:rgba(255,92,77,.4);}
+.alert-ic{font-size:22px;}
+footer{text-align:center;font-size:11.5px;color:var(--ink-dim);letter-spacing:.1em;margin-top:34px;}
+.skel{opacity:.4;animation:sk 1.2s ease-in-out infinite;}
+@keyframes sk{0%,100%{opacity:.35}50%{opacity:.65}}
+.errbox{text-align:center;padding:30px;color:var(--warn);font-size:14px;}
+
+#site{display:none;}
+#gate{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,#08121f 0%,#03060c 75%);transition:opacity .7s,visibility .7s;}
+#gate.hidden{opacity:0;visibility:hidden;pointer-events:none;}
+.gate-box{width:min(420px,88vw);text-align:center;padding:38px 30px;position:relative;}
+.gate-ring{width:100px;height:100px;margin:0 auto 20px;position:relative;}
+.gate-ring i{position:absolute;inset:0;border-radius:50%;border:1px solid transparent;}
+.gate-ring i:nth-child(1){border-top-color:var(--cyan);border-right-color:var(--cyan);animation:spin 3.2s linear infinite;}
+.gate-ring i:nth-child(2){inset:14px;border-bottom-color:var(--blue);border-left-color:var(--blue);animation:spin 4.6s linear infinite reverse;}
+.gate-ring i:nth-child(3){inset:30px;background:radial-gradient(circle,rgba(0,229,255,.5),transparent 70%);animation:pulse 2.4s ease-in-out infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.gate-title{font-family:'Orbitron';font-size:16px;letter-spacing:.24em;color:var(--cyan);font-weight:700;}
+.gate-sub{margin-top:6px;font-size:11.5px;letter-spacing:.2em;color:var(--ink-dim);}
+.gate-q{margin-top:24px;font-family:'Orbitron';font-size:16px;}
+.gate-label{margin-top:18px;font-size:11px;letter-spacing:.2em;color:var(--ink-dim);text-align:left;}
+#nameInput{margin-top:8px;width:100%;background:rgba(0,229,255,.05);border:1px solid var(--line);border-radius:8px;padding:12px 14px;color:var(--ink);font-size:15px;outline:none;}
+#nameInput:focus{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(0,229,255,.1);}
+#initBtn{margin-top:18px;width:100%;padding:13px;background:linear-gradient(90deg,var(--cyan),var(--blue));border:none;border-radius:8px;color:#02121a;font-weight:700;letter-spacing:.12em;font-size:13px;transition:transform .2s,box-shadow .2s;cursor:pointer;}
+#initBtn:hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(0,229,255,.25);}
+.gate-foot{margin-top:16px;font-size:10px;letter-spacing:.16em;color:var(--cyan-dim);}
+
+#boot{position:fixed;inset:0;z-index:600;background:#03060c;display:none;align-items:center;justify-content:center;flex-direction:column;}
+#boot.active{display:flex;}
+.boot-core{width:150px;height:150px;position:relative;margin-bottom:8px;}
+.boot-core .ring{position:absolute;inset:0;border-radius:50%;border:1px solid rgba(0,229,255,.18);}
+.boot-core .r1{border-top-color:var(--cyan);border-bottom-color:var(--cyan);animation:spin 2.6s linear infinite;}
+.boot-core .r2{inset:14px;border-left-color:var(--blue);border-right-color:var(--blue);animation:spin 3.4s linear infinite reverse;}
+.boot-core .r3{inset:30px;border-top-color:var(--cyan);animation:spin 1.6s linear infinite;}
+.boot-core .core-dot{position:absolute;inset:54px;border-radius:50%;background:radial-gradient(circle,#bff7ff,var(--cyan) 55%,transparent 75%);animation:pulse 1.6s ease-in-out infinite;box-shadow:0 0 34px rgba(0,229,255,.6);}
+.boot-core .radar{position:absolute;inset:0;border-radius:50%;overflow:hidden;}
+.boot-core .radar::after{content:'';position:absolute;inset:0;background:conic-gradient(from 0deg,rgba(0,229,255,.35),transparent 40%);animation:spin 2.2s linear infinite;}
+.boot-pct{font-family:'Orbitron';font-size:28px;color:var(--cyan);margin-top:4px;}
+.boot-bar{width:min(320px,80vw);height:3px;background:rgba(255,255,255,.08);margin-top:14px;border-radius:2px;overflow:hidden;}
+.boot-bar i{display:block;height:100%;width:0%;background:linear-gradient(90deg,var(--blue),var(--cyan));transition:width .25s linear;}
+.boot-log{margin-top:18px;height:100px;width:min(380px,86vw);font-size:12.5px;color:var(--cyan-dim);text-align:left;overflow:hidden;}
+.boot-log div{opacity:0;transform:translateX(-6px);transition:opacity .3s,transform .3s;white-space:nowrap;overflow:hidden;}
+.boot-log div.show{opacity:1;transform:translateX(0);}
+.boot-log div.ok{color:var(--cyan);}
+.boot-welcome{position:absolute;text-align:center;opacity:0;transition:opacity .6s;}
+.boot-welcome.show{opacity:1;}
+.boot-welcome .l1{font-size:11.5px;letter-spacing:.22em;color:var(--ink-dim);}
+.boot-welcome .l2{font-family:'Orbitron';font-size:clamp(17px,3.6vw,24px);color:var(--ink);margin-top:8px;}
+.boot-welcome .l3{font-family:'Orbitron';font-size:11px;letter-spacing:.16em;color:var(--cyan);margin-top:12px;}
+</style>
+</head>
+<body>
+<div id="bg-grid"></div><div id="bg-glow"></div>
+
+<div id="gate">
+  <div class="glass gate-box">
+    <div class="gate-ring"><i></i><i></i><i></i></div>
+    <div class="gate-title">ASHWA AI</div>
+    <div class="gate-sub">WEATHER INTELLIGENCE</div>
+    <div class="gate-q">Who's checking the sky today?</div>
+    <div class="gate-label">YOUR NAME</div>
+    <input id="nameInput" type="text" placeholder="Enter your name" />
+    <button id="initBtn">ENTER ASHWA AI</button>
+    <div class="gate-foot">SECURE ACCESS • ASHWA AI SYSTEMS</div>
+  </div>
+</div>
+
+<div id="boot">
+  <div class="boot-core"><div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div><div class="radar"></div><div class="core-dot"></div></div>
+  <div class="boot-pct">0%</div>
+  <div class="boot-bar"><i id="bootBarFill"></i></div>
+  <div class="boot-log" id="bootLog"></div>
+  <div class="boot-welcome" id="bootWelcome"><div class="l1">ACCESS GRANTED</div><div class="l2" id="welcomeName">WELCOME TO ASHWA AI WEATHER</div><div class="l3">INITIALIZING DASHBOARD...</div></div>
+</div>
+
+<div class="wrap" id="site">
+<header>
+  <div class="brand">
+    <svg viewBox="0 0 100 100"><path d="M50 6 C34 6 22 20 22 38 C22 48 27 55 20 62 C30 68 34 60 40 64 L40 88 C40 92 44 94 48 92 L58 84 C62 81 62 76 60 72 L52 60 C64 58 78 50 78 34 C78 18 66 6 50 6 Z" fill="none" stroke="#00e5ff" stroke-width="2.4"/><circle cx="58" cy="26" r="2.6" fill="#00e5ff"/></svg>
+    <div><h1>ASHWA AI</h1><span>WEATHER INTELLIGENCE</span></div>
+  </div>
+  <div class="live"><span class="dot"></span> LIVE • <span id="clock">--:--:--</span></div>
+</header>
+
+<div class="searchbar">
+  <div style="flex:1;min-width:180px;position:relative;">
+    <input id="cityInput" type="text" placeholder="Search any Indian city or state..." autocomplete="off" style="width:100%;" />
+    <div id="suggestBox"></div>
+  </div>
+  <button class="btn btn-primary" id="searchBtn">SEARCH</button>
+  <button class="btn btn-ghost" id="locBtn">USE MY LOCATION</button>
+</div>
+<div class="locrow" id="locRow">Detecting location...</div>
+
+<div id="app">
+  <div class="errbox skel">ASHWA AI is calibrating sensors...</div>
+</div>
+
+<footer>ASHWA AI Weather Intelligence • Weather data powered by Open‑Meteo</footer>
+</div>
+
+<script>
+const WCODE = {
+  0:['Clear sky','clear'],1:['Mostly clear','clear'],2:['Partly cloudy','cloud'],3:['Overcast','cloud'],
+  45:['Fog','fog'],48:['Depositing fog','fog'],
+  51:['Light drizzle','rain'],53:['Drizzle','rain'],55:['Dense drizzle','rain'],
+  61:['Light rain','rain'],63:['Rain','rain'],65:['Heavy rain','rain'],
+  71:['Light snow','fog'],73:['Snow','fog'],75:['Heavy snow','fog'],
+  80:['Rain showers','rain'],81:['Rain showers','rain'],82:['Violent showers','rain'],
+  95:['Thunderstorm','storm'],96:['Thunderstorm, hail','storm'],99:['Severe thunderstorm','storm']
+};
+function condOf(code){return WCODE[code]||['Unknown','cloud'];}
+function icon(type,isDay,size=40){
+  const c='#00e5ff', c2='#3d7dff';
+  const mane=`<path d="M50 8 C36 8 26 20 26 36 C26 45 30 51 25 57 C33 62 36 55 41 58" fill="none" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`;
+  let extra='';
+  if(type==='clear') extra = isDay?`<circle cx="72" cy="26" r="12" fill="${c}" opacity=".85"/>` : `<path d="M68 16a12 12 0 1 0 10 18 10 10 0 0 1-10-18Z" fill="${c}"/>`;
+  if(type==='cloud') extra=`<ellipse cx="68" cy="34" rx="20" ry="11" fill="${c2}" opacity=".8"/>`;
+  if(type==='rain') extra=`<ellipse cx="66" cy="30" rx="18" ry="10" fill="${c2}" opacity=".8"/><line x1="58" y1="46" x2="54" y2="58" stroke="${c}" stroke-width="3" stroke-linecap="round"/><line x1="72" y1="46" x2="68" y2="58" stroke="${c}" stroke-width="3" stroke-linecap="round"/>`;
+  if(type==='storm') extra=`<ellipse cx="66" cy="30" rx="18" ry="10" fill="${c2}" opacity=".8"/><path d="M64 44 L56 58 L64 58 L58 70 L74 52 L66 52 Z" fill="${c}"/>`;
+  if(type==='fog') extra=`<line x1="46" y1="34" x2="90" y2="34" stroke="${c2}" stroke-width="3" stroke-linecap="round"/><line x1="50" y1="42" x2="86" y2="42" stroke="${c2}" stroke-width="3" stroke-linecap="round" opacity=".6"/>`;
+  return `<svg viewBox="0 0 100 80" width="${size}" height="${size}">${extra}${mane}</svg>`;
+}
+function fmtTime(iso){return new Date(iso).toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});}
+function fmtHour(iso){return new Date(iso).toLocaleTimeString('en-US',{hour:'numeric'});}
+function fmtDay(iso,i){if(i===0)return'Today';return new Date(iso).toLocaleDateString('en-US',{weekday:'short'});}
+function fmtDate(iso){return new Date(iso).toLocaleDateString('en-US',{month:'short',day:'numeric'});}
+function windDir(d){const dirs=['N','NE','E','SE','S','SW','W','NW'];return dirs[Math.round(d/45)%8];}
+
+function analyse(cur,daily,hourly){
+  const bits=[];
+  bits.push(`Temperature is ${Math.round(cur.temperature_2m)}°C, ${condOf(cur.weather_code)[0].toLowerCase()} with ${daily.precipitation_probability_max[0]}% chance of rain today.`);
+  if(daily.precipitation_probability_max[0]>50) bits.push('Carry an umbrella — rain probability is significant.');
+  if(cur.wind_speed_10m>30) bits.push('Strong winds are expected; secure loose items outdoors.');
+  if(cur.cloud_cover>80) bits.push('Visibility may be reduced due to heavy cloud cover.');
+  if(daily.uv_index_max[0]>=7) bits.push('UV levels are high; avoid prolonged direct sunlight.');
+  const nowH=new Date().getHours();
+  const eveIdx=hourly.time.findIndex(t=>new Date(t).getHours()===18);
+  if(eveIdx>-1 && hourly.precipitation_probability[eveIdx] > daily.precipitation_probability_max[0]-15 && hourly.precipitation_probability[eveIdx]>40) bits.push('Rain probability is increasing during the evening.');
+  return bits.join(' ');
+}
+function alertCheck(cur,daily){
+  if([95,96,99].includes(cur.weather_code)) return {icon:'⚡',text:'Thunderstorm Alert — seek shelter if outdoors.'};
+  if(daily.precipitation_probability_max[0]>75) return {icon:'⚠',text:'Heavy Rain Alert — flooding possible in low-lying areas.'};
+  if(cur.wind_gusts_10m>55) return {icon:'💨',text:'Strong Wind Alert — gusts exceeding 55 km/h.'};
+  if([45,48].includes(cur.weather_code)) return {icon:'🌫',text:'Low Visibility Alert — fog reducing sight distance.'};
+  if(cur.temperature_2m>42 || cur.temperature_2m<2) return {icon:'🌡',text:'Extreme Temperature Alert.'};
+  return null;
+}
+
+async function loadWeather(lat,lon,label){
+  document.getElementById('app').innerHTML='<div class="errbox skel">ASHWA AI is analyzing atmospheric data...</div>';
+  try{
+    const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current=temperature_2m,relative_humidity_2m,apparent_temperature,precipitation,weather_code,cloud_cover,pressure_msl,wind_speed_10m,wind_direction_10m,wind_gusts_10m,is_day,visibility&hourly=temperature_2m,precipitation_probability,weather_code,wind_speed_10m&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,sunrise,sunset,uv_index_max&timezone=auto&forecast_days=7`;
+    const r=await fetch(url); if(!r.ok)throw new Error('api');
+    const d=await r.json();
+    render(d,label);
+  }catch(e){
+    document.getElementById('app').innerHTML='<div class="errbox">ASHWA AI could not reach the weather network. Check your connection and try again.</div>';
+  }
+}
+
+function render(d,label){
+  const cur=d.current, daily=d.daily, hourly=d.hourly;
+  document.getElementById('locRow').innerHTML=`<b>${label}</b> • ${new Date().toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'})}`;
+  const [condText,type]=condOf(cur.weather_code);
+  const nowIdx = hourly.time.findIndex(t=>new Date(t)>=new Date());
+  let hoursHtml='';
+  for(let i=nowIdx;i<nowIdx+24 && i<hourly.time.length;i++){
+    hoursHtml+=`<div class="glass hour"><div class="t">${fmtHour(hourly.time[i])}</div>${icon(condOf(hourly.weather_code[i])[1],1,32)}<div class="v">${Math.round(hourly.temperature_2m[i])}°</div><div class="p">💧${hourly.precipitation_probability[i]}%</div></div>`;
+  }
+  let daysHtml='';
+  for(let i=0;i<7;i++){
+    const [c]=condOf(daily.weather_code[i]);
+    daysHtml+=`<div class="glass day"><div class="dn">${fmtDay(daily.time[i],i)}<small>${fmtDate(daily.time[i])}</small></div>${icon(condOf(daily.weather_code[i])[1],1,28)}<div class="cond2">${c} • 💧${daily.precipitation_probability_max[i]}%</div><div class="rng">${Math.round(daily.temperature_2m_max[i])}° <span class="lo">${Math.round(daily.temperature_2m_min[i])}°</span></div></div>`;
+  }
+  const al=alertCheck(cur,daily);
+  const alertHtml = al ? `<div class="glass alert-card warn"><div class="alert-ic">${al.icon}</div><div>${al.text}</div></div>` : `<div class="glass alert-card ok"><div class="alert-ic">✓</div><div>ASHWA AI: No major weather alert detected.</div></div>`;
+
+  document.getElementById('app').innerHTML=`
+  <div class="hero">
+    <div class="glass hero-card"><div class="corner tl"></div><div class="corner br"></div>
+      <div class="temp-row">${icon(type,cur.is_day,80)}<div><div class="tval">${Math.round(cur.temperature_2m)}°C</div><div class="cond">${condText}</div><div class="feels">Feels like ${Math.round(cur.apparent_temperature)}°C</div></div></div>
+    </div>
+    <div class="glass ai-box"><div class="corner tl"></div><div class="corner br"></div>
+      <div class="ai-tag">ASHWA AI ANALYSIS</div><div class="ai-text">${analyse(cur,daily,hourly)}</div>
+    </div>
+  </div>
+  <div class="grid-stats">
+    <div class="glass stat"><div class="l">HUMIDITY</div><div class="v">${cur.relative_humidity_2m}%</div></div>
+    <div class="glass stat"><div class="l">WIND</div><div class="v">${Math.round(cur.wind_speed_10m)} km/h</div></div>
+    <div class="glass stat"><div class="l">DIRECTION</div><div class="v">${windDir(cur.wind_direction_10m)}</div></div>
+    <div class="glass stat"><div class="l">GUST</div><div class="v">${Math.round(cur.wind_gusts_10m)} km/h</div></div>
+    <div class="glass stat"><div class="l">RAIN CHANCE</div><div class="v">${daily.precipitation_probability_max[0]}%</div></div>
+    <div class="glass stat"><div class="l">CLOUD COVER</div><div class="v">${cur.cloud_cover}%</div></div>
+    <div class="glass stat"><div class="l">PRESSURE</div><div class="v">${Math.round(cur.pressure_msl)} hPa</div></div>
+    <div class="glass stat"><div class="l">UV INDEX</div><div class="v">${daily.uv_index_max[0]}</div></div>
+    <div class="glass stat"><div class="l">SUNRISE</div><div class="v">${fmtTime(daily.sunrise[0])}</div></div>
+    <div class="glass stat"><div class="l">SUNSET</div><div class="v">${fmtTime(daily.sunset[0])}</div></div>
+  </div>
+  <div class="sec-title">24-HOUR FORECAST</div>
+  <div class="hscroll">${hoursHtml}</div>
+  <div class="sec-title">7-DAY FORECAST</div>
+  <div class="days">${daysHtml}</div>
+  ${alertHtml}`;
+}
+
+const CITY_ALIASES={
+  'prayagraj':'Allahabad','gorakhpur':'Gorakhpur','bengaluru':'Bangalore','mumbai':'Mumbai',
+  'kolkata':'Calcutta','chennai':'Madras','pune':'Pune','vadodara':'Baroda','thiruvananthapuram':'Trivandrum',
+  'kochi':'Cochin','varanasi':'Varanasi','ayodhya':'Faizabad','mysuru':'Mysore','puducherry':'Pondicherry',
+  'gurugram':'Gurgaon'
+};
+async function geocode(q){
+  const url=(n)=>`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(n)}&count=30&language=en&format=json`;
+  let r=await fetch(url(q));
+  if(!r.ok) throw new Error('Geocoding server returned status '+r.status);
+  let d=await r.json();
+  if((!d.results||!d.results.length)){
+    const key=q.trim().toLowerCase();
+    if(CITY_ALIASES[key]){
+      r=await fetch(url(CITY_ALIASES[key]));
+      if(r.ok) d=await r.json();
+    }
+  }
+  if((!d.results||!d.results.length) && q.trim().split(' ').length>1){
+    r=await fetch(url(q.trim().split(' ')[0]));
+    if(r.ok) d=await r.json();
+  }
+  if(!d.results||!d.results.length) return [];
+  const inRes=d.results.filter(p=>p.country_code==='IN');
+  return inRes.length?inRes:d.results;
+}
+function pickLabel(p){return [p.name,p.admin1,p.country].filter(Boolean).join(', ');}
+
+async function searchCity(q){
+  document.getElementById('suggestBox').classList.remove('show');
+  document.getElementById('app').innerHTML='<div class="errbox skel">ASHWA AI is locating "'+q+'"...</div>';
+  try{
+    const results=await geocode(q);
+    if(!results.length){document.getElementById('app').innerHTML='<div class="errbox">ASHWA AI: "'+q+'" isn\'t in the global location database this app uses. Very small villages often aren\'t listed individually — try the name of the nearest tehsil, block, or bigger town/city near it instead.</div>';return;}
+    const p=results[0];
+    loadWeather(p.latitude,p.longitude,pickLabel(p));
+  }catch(e){
+    document.getElementById('app').innerHTML='<div class="errbox">ASHWA AI: Search request failed — '+e.message+'<br><br>This usually means the page is open inside a restricted preview. Open this file in your phone\'s Chrome browser directly for it to work.</div>';
+  }
+}
+
+let suggestTimer=null;
+document.getElementById('cityInput').addEventListener('input',e=>{
+  clearTimeout(suggestTimer);
+  const q=e.target.value.trim();
+  const box=document.getElementById('suggestBox');
+  if(q.length<2){box.classList.remove('show');box.innerHTML='';return;}
+  suggestTimer=setTimeout(async()=>{
+    try{
+      const results=await geocode(q);
+      if(!results.length){box.classList.remove('show');return;}
+      box.innerHTML=results.slice(0,6).map(p=>`<div data-lat="${p.latitude}" data-lon="${p.longitude}" data-label="${pickLabel(p)}">${p.name}<small>${[p.admin1,p.country].filter(Boolean).join(', ')}</small></div>`).join('');
+      box.classList.add('show');
+      box.querySelectorAll('div').forEach(el=>el.onclick=()=>{
+        document.getElementById('cityInput').value=el.dataset.label;
+        box.classList.remove('show');
+        loadWeather(el.dataset.lat,el.dataset.lon,el.dataset.label);
+      });
+    }catch(e){box.classList.remove('show');}
+  },350);
+});
+document.addEventListener('click',e=>{if(!e.target.closest('.searchbar')) document.getElementById('suggestBox').classList.remove('show');});
+
+async function useMyLocation(){
+  if(!navigator.geolocation){
+    document.getElementById('app').innerHTML='<div class="errbox">ASHWA AI: This browser does not support location detection. Please search a city instead.</div>';
+    return;
+  }
+  document.getElementById('app').innerHTML='<div class="errbox skel">ASHWA AI is requesting location access — please allow the permission prompt...</div>';
+  try{
+    if(navigator.permissions && navigator.permissions.query){
+      const st=await navigator.permissions.query({name:'geolocation'});
+      if(st.state==='denied'){
+        document.getElementById('app').innerHTML='<div class="errbox">ASHWA AI: Location is blocked for this page in your browser settings.<br><br>Open Chrome → tap the lock/info icon next to the address bar → Permissions → Location → Allow. Then tap "Use My Location" again.<br><br>(If you\'re viewing this inside Claude\'s app preview instead of a real browser tab, location and live data will never work there — open the downloaded file in Chrome directly.)</div>';
+        return;
+      }
+    }
+  }catch(e){}
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const {latitude,longitude}=pos.coords;
+    let label=`${latitude.toFixed(2)}, ${longitude.toFixed(2)}`;
+    try{
+      const r=await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+      const d=await r.json();
+      label=[d.city||d.locality,d.principalSubdivision,d.countryName].filter(Boolean).join(', ');
+    }catch(e){}
+    loadWeather(latitude,longitude,label);
+  },err=>{
+    let msg='ASHWA AI could not detect your location.';
+    if(err.code===1) msg='ASHWA AI: Location permission was denied. Allow location access in your browser/site settings, then tap "Use My Location" again — or search a city manually.';
+    else if(err.code===2) msg='ASHWA AI: Your position is currently unavailable. Try again or search a city manually.';
+    else if(err.code===3) msg='ASHWA AI: Location request timed out. Try again or search a city manually.';
+    document.getElementById('app').innerHTML=`<div class="errbox">${msg}</div>`;
+  },{timeout:12000,maximumAge:60000,enableHighAccuracy:false});
+}
+
+document.getElementById('searchBtn').onclick=()=>{const v=document.getElementById('cityInput').value.trim();if(v)searchCity(v);};
+document.getElementById('cityInput').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('searchBtn').click();});
+document.getElementById('locBtn').onclick=useMyLocation;
+
+function tickClock(){document.getElementById('clock').textContent=new Date().toLocaleTimeString('en-US',{hour12:false});}
+setInterval(tickClock,1000); tickClock();
+
+/* ---------------- login gate + boot sequence ---------------- */
+const gate=document.getElementById('gate'),boot=document.getElementById('boot'),site=document.getElementById('site');
+const bootLog=document.getElementById('bootLog'),bootPct=document.querySelector('.boot-pct'),bootBar=document.getElementById('bootBarFill'),bootWelcome=document.getElementById('bootWelcome');
+const nameInput=document.getElementById('nameInput');
+let ttsVoices=[];
+function loadVoices(){ttsVoices=speechSynthesis.getVoices();}
+if('speechSynthesis' in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}
+function pickMaleVoice(){
+  const prefer=['Google UK English Male','Microsoft David','Microsoft Ravi','Microsoft Mark','Daniel','Alex','Fred','Rishi'];
+  let v=ttsVoices.find(v=>prefer.some(p=>v.name.includes(p)));
+  if(!v) v=ttsVoices.find(v=>/male/i.test(v.name)&&!/female/i.test(v.name));
+  if(!v) v=ttsVoices.find(v=>v.lang==='en-IN'&&!/female/i.test(v.name));
+  if(!v) v=ttsVoices.find(v=>v.lang&&v.lang.startsWith('en')&&!/female/i.test(v.name));
+  return v;
+}
+function speak(text){
+  try{
+    if(!('speechSynthesis' in window)) return;
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    if(!ttsVoices.length) ttsVoices=speechSynthesis.getVoices();
+    const v=pickMaleVoice();
+    if(v) u.voice=v;
+    u.rate=0.9;u.pitch=0.55;u.volume=1;u.lang='en-IN';
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function startBoot(name){
+  gate.classList.add('hidden');
+  boot.classList.add('active');
+  speak(name ? `Welcome, ${name}, to Ashwa A I Weather.` : 'Welcome to Ashwa A I Weather.');
+  bootLog.innerHTML='';
+  const msgs=['CONNECTING TO ATMOSPHERIC NETWORK...','CALIBRATING ASHWA SENSORS...','SYNCING SATELLITE FEED...','IDENTITY VERIFIED...','WEATHER INTELLIGENCE ONLINE...'];
+  msgs.forEach((m,i)=>{const d=document.createElement('div');d.textContent='> '+m;if(i>=msgs.length-2)d.classList.add('ok');bootLog.appendChild(d);});
+  const lines=[...bootLog.children];let li=0;
+  const logTimer=setInterval(()=>{if(li<lines.length){lines[li].classList.add('show');li++;}else clearInterval(logTimer);},380);
+  let pct=0;
+  const pTimer=setInterval(()=>{
+    pct+=Math.random()*10+4;
+    if(pct>=100){
+      pct=100;clearInterval(pTimer);
+      bootPct.textContent='100%';bootBar.style.width='100%';
+      setTimeout(()=>{
+        document.getElementById('welcomeName').textContent = name ? `WELCOME, ${name.toUpperCase()} — TO ASHWA AI WEATHER` : 'WELCOME TO ASHWA AI WEATHER';
+        bootWelcome.classList.add('show');
+        setTimeout(()=>{
+          boot.classList.remove('active');
+          site.style.display='block';
+          useMyLocation();
+        },2000);
+      },400);
+    }
+    bootPct.textContent=Math.floor(pct)+'%';
+    bootBar.style.width=pct+'%';
+  },200);
+}
+document.getElementById('initBtn').onclick=()=>startBoot(nameInput.value.trim());
+nameInput.addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('initBtn').click();});
+</script>
+</body>
+</html>
